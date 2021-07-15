@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <Header @ricerca="ricercaFilm"/>
-    <Main :films="films" :campoRicerca="searchText"/>
+    <Main :films="films" :tv="tv" :campoRicerca="searchText"/>
   </div>
 </template>
 
@@ -18,29 +18,36 @@ export default {
   },
   data(){
     return{
-      apiUrl: 'https://api.themoviedb.org/3/search/movie?',
+      apiUrl: 'https://api.themoviedb.org/3/search/movie',
+      apiTvUrl: 'https://api.themoviedb.org/3/search/tv',
       apiKey: 'bc3ca9c37468176456721a114502cca2',
       language: 'it-IT',
       films: [],
+      tv: [],
       searchText: ''
     }
   },
-  methods : {
-      ricercaFilm(text){
+  methods:{
+      ricercaFilm(text) {
         this.searchText = text;
-          axios
-            .get(this.apiUrl,{
-              params: {
-                  api_key: this.apiKey,
-                  language: this.language,
-                  query: text
-              }
-            })
-            .then( response => {
-              console.log(response.data.results);
-              this.films = response.data.results;
-            });
-        console.log(text);
+
+        const request = {
+            params: {
+              api_key: this.apiKey,
+              language: this.language,
+              query: text
+            }
+        };
+
+        axios
+            .all([
+                axios.get(this.apiUrl, request),
+                axios.get(this.apiTvUrl, request)
+            ])
+            .then(axios.spread( ( responseMovies, responseTv) => {
+                this.films = responseMovies.data.results;
+                this.tv = responseTv.data.results;
+            }));
       }
   }
 }
